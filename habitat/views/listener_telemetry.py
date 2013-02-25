@@ -60,7 +60,7 @@ def time_created_callsign_map(doc):
         tc = rfc3339_to_timestamp(doc['time_created'])
         yield (tc, doc['data']['callsign']), None
 
-@version(1)
+@version(2)
 def callsign_time_created_map(doc):
     """
     View: ``listener_telemetry/callsign_time_created``
@@ -70,9 +70,27 @@ def callsign_time_created_map(doc):
         [callsign, time_created] -> null
 
     Times are UNIX timestamps (and therefore in UTC).
-    
+
     Sorts by callsign. Useful to see a certain callsign's latest telemetry.
     """
     if doc['type'] == "listener_telemetry":
         tc = rfc3339_to_timestamp(doc['time_created'])
-        yield (doc['data']['callsign'], tc), None
+        yield (doc['data']['callsign'], tc), doc['data']
+
+@version(1)
+def callsign_time_created_reduce(keys, values, rereduce):
+    """
+    View: ``listener_telemetry/callsign_time_created``
+
+
+    Reduces dataset to latest ``doc.data`` for each callsign.
+    """
+    ts = 0
+    idx = 0
+
+    for i in range(0, len(keys)):
+        if key[i][0][1] >= ts:
+            ts = key[i][0][1]
+            idx = i
+
+    yield [keys[idx][0][1], values[i]]
